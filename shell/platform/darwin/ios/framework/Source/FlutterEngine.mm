@@ -653,10 +653,12 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
 #pragma mark - Notifications
 
 - (void)applicationBecameActive:(NSNotification*)notification {
+  NSLog(@"test___applicationBecameActive");
   [self setIsGpuDisabled:NO];
 }
 
 - (void)applicationWillResignActive:(NSNotification*)notification {
+  NSLog(@"test___applicationWillResignActive");
   [self setIsGpuDisabled:YES];
 }
 
