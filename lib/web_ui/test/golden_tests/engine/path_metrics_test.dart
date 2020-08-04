@@ -22,10 +22,10 @@ void main() async {
 
   // Commit a recording canvas to a bitmap, and compare with the expected
   Future<void> _checkScreenshot(RecordingCanvas rc, String fileName,
-      {Rect region = const Rect.fromLTWH(0, 0, 500, 500),
-      bool write = false}) async {
+      {Rect region = const Rect.fromLTWH(0, 0, 500, 500)}) async {
     final EngineCanvas engineCanvas = BitmapCanvas(screenRect);
-    rc.apply(engineCanvas);
+    rc.endRecording();
+    rc.apply(engineCanvas, screenRect);
 
     // Wrap in <flt-scene> so that our CSS selectors kick in.
     final html.Element sceneElement = html.Element.tag('flt-scene');

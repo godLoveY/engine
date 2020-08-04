@@ -1,6 +1,7 @@
 // Copyright 2013 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+// FLUTTER_NOLINT
 
 #include "flutter/testing/mock_canvas.h"
 
@@ -60,10 +61,9 @@ void MockCanvas::didConcat(const SkMatrix& matrix) {
   draw_calls_.emplace_back(DrawCall{current_layer_, ConcatMatrixData{matrix}});
 }
 
-void MockCanvas::didConcat44(const SkScalar matrix[]) {
-  SkMatrix44 m44;
-  m44.setColMajor(matrix);
-  draw_calls_.emplace_back(DrawCall{current_layer_, ConcatMatrix44Data{m44}});
+void MockCanvas::didConcat44(const SkM44& matrix) {
+  draw_calls_.emplace_back(
+      DrawCall{current_layer_, ConcatMatrix44Data{matrix}});
 }
 
 void MockCanvas::didScale(SkScalar x, SkScalar y) {

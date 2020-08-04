@@ -4,6 +4,7 @@
 
 #include "flutter/shell/platform/darwin/ios/framework/Source/FlutterPlatformPlugin.h"
 #include "flutter/fml/logging.h"
+#include "flutter/shell/platform/darwin/ios/framework/Source/FlutterViewController_Internal.h"
 
 #include <AudioToolbox/AudioToolbox.h>
 #include <Foundation/Foundation.h>
@@ -87,6 +88,8 @@ using namespace flutter;
   } else if ([method isEqualToString:@"Clipboard.setData"]) {
     [self setClipboardData:args];
     result(nil);
+  } else if ([method isEqualToString:@"Clipboard.hasStrings"]) {
+    result([self clipboardHasStrings]);
   } else {
     result(FlutterMethodNotImplemented);
   }
@@ -161,6 +164,15 @@ using namespace flutter;
   // UIViewControllerBasedStatusBarAppearance
   [UIApplication sharedApplication].statusBarHidden =
       ![overlays containsObject:@"SystemUiOverlay.top"];
+  if ([overlays containsObject:@"SystemUiOverlay.bottom"]) {
+    [[NSNotificationCenter defaultCenter]
+        postNotificationName:FlutterViewControllerShowHomeIndicator
+                      object:nil];
+  } else {
+    [[NSNotificationCenter defaultCenter]
+        postNotificationName:FlutterViewControllerHideHomeIndicator
+                      object:nil];
+  }
 }
 
 - (void)restoreSystemChromeSystemUIOverlays {
@@ -236,6 +248,18 @@ using namespace flutter;
   } else {
     pasteboard.string = @"null";
   }
+}
+
+- (NSDictionary*)clipboardHasStrings {
+  bool hasStrings = false;
+  UIPasteboard* pasteboard = [UIPasteboard generalPasteboard];
+  if (@available(iOS 10, *)) {
+    hasStrings = pasteboard.hasStrings;
+  } else {
+    NSString* stringInPasteboard = pasteboard.string;
+    hasStrings = stringInPasteboard != nil;
+  }
+  return @{@"value" : @(hasStrings)};
 }
 
 @end

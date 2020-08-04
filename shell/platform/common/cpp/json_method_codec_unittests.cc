@@ -1,9 +1,11 @@
 // Copyright 2013 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+// FLUTTER_NOLINT
 
 #include "flutter/shell/platform/common/cpp/json_method_codec.h"
 
+#include "flutter/shell/platform/common/cpp/client_wrapper/include/flutter/method_result_functions.h"
 #include "gtest/gtest.h"
 
 namespace flutter {
@@ -60,7 +62,17 @@ TEST(JsonMethodCodec, HandlesSuccessEnvelopesWithNullResult) {
   ASSERT_TRUE(encoded);
   std::vector<uint8_t> bytes = {'[', 'n', 'u', 'l', 'l', ']'};
   EXPECT_EQ(*encoded, bytes);
-  // TODO: Add round-trip check once decoding replies is implemented.
+
+  bool decoded_successfully = false;
+  MethodResultFunctions<rapidjson::Document> result_handler(
+      [&decoded_successfully](const rapidjson::Document* result) {
+        decoded_successfully = true;
+        EXPECT_EQ(result, nullptr);
+      },
+      nullptr, nullptr);
+  codec.DecodeAndProcessResponseEnvelope(encoded->data(), encoded->size(),
+                                         &result_handler);
+  EXPECT_TRUE(decoded_successfully);
 }
 
 TEST(JsonMethodCodec, HandlesSuccessEnvelopesWithResult) {
@@ -71,7 +83,17 @@ TEST(JsonMethodCodec, HandlesSuccessEnvelopesWithResult) {
   ASSERT_TRUE(encoded);
   std::vector<uint8_t> bytes = {'[', '4', '2', ']'};
   EXPECT_EQ(*encoded, bytes);
-  // TODO: Add round-trip check once decoding replies is implemented.
+
+  bool decoded_successfully = false;
+  MethodResultFunctions<rapidjson::Document> result_handler(
+      [&decoded_successfully](const rapidjson::Document* result) {
+        decoded_successfully = true;
+        EXPECT_EQ(result->GetInt(), 42);
+      },
+      nullptr, nullptr);
+  codec.DecodeAndProcessResponseEnvelope(encoded->data(), encoded->size(),
+                                         &result_handler);
+  EXPECT_TRUE(decoded_successfully);
 }
 
 TEST(JsonMethodCodec, HandlesErrorEnvelopesWithNulls) {
@@ -83,7 +105,22 @@ TEST(JsonMethodCodec, HandlesErrorEnvelopesWithNulls) {
       '"', ',', '"', '"', ',', 'n', 'u', 'l', 'l', ']',
   };
   EXPECT_EQ(*encoded, bytes);
-  // TODO: Add round-trip check once decoding replies is implemented.
+
+  bool decoded_successfully = false;
+  MethodResultFunctions<rapidjson::Document> result_handler(
+      nullptr,
+      [&decoded_successfully](const std::string& code,
+                              const std::string& message,
+                              const rapidjson::Document* details) {
+        decoded_successfully = true;
+        EXPECT_EQ(code, "errorCode");
+        EXPECT_EQ(message, "");
+        EXPECT_EQ(details, nullptr);
+      },
+      nullptr);
+  codec.DecodeAndProcessResponseEnvelope(encoded->data(), encoded->size(),
+                                         &result_handler);
+  EXPECT_TRUE(decoded_successfully);
 }
 
 TEST(JsonMethodCodec, HandlesErrorEnvelopesWithDetails) {
@@ -101,7 +138,24 @@ TEST(JsonMethodCodec, HandlesErrorEnvelopesWithDetails) {
       'e', 'd', '"', ',', '[', '"', 'a', '"', ',', '4', '2', ']', ']',
   };
   EXPECT_EQ(*encoded, bytes);
-  // TODO: Add round-trip check once decoding replies is implemented.
+
+  bool decoded_successfully = false;
+  MethodResultFunctions<rapidjson::Document> result_handler(
+      nullptr,
+      [&decoded_successfully](const std::string& code,
+                              const std::string& message,
+                              const rapidjson::Document* details) {
+        decoded_successfully = true;
+        EXPECT_EQ(code, "errorCode");
+        EXPECT_EQ(message, "something failed");
+        EXPECT_TRUE(details->IsArray());
+        EXPECT_EQ(std::string((*details)[0].GetString()), "a");
+        EXPECT_EQ((*details)[1].GetInt(), 42);
+      },
+      nullptr);
+  codec.DecodeAndProcessResponseEnvelope(encoded->data(), encoded->size(),
+                                         &result_handler);
+  EXPECT_TRUE(decoded_successfully);
 }
 
 }  // namespace flutter
