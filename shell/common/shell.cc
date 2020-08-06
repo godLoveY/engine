@@ -958,15 +958,28 @@ void Shell::OnAnimatorDraw(fml::RefPtr<Pipeline<flutter::LayerTree>> pipeline) {
       [& waiting_for_first_frame = waiting_for_first_frame_,
        &waiting_for_first_frame_condition = waiting_for_first_frame_condition_,
        rasterizer = rasterizer_->GetWeakPtr(),
-       pipeline = std::move(pipeline)]() {
-        if (rasterizer) {
-          rasterizer->Draw(pipeline);
+       pipeline = std::move(pipeline),
+       is_backgrounded_sync_switch = is_gpu_disabled_sync_switch_]() {
+         if (rasterizer) {
+           is_backgrounded_sync_switch->Execute(
+             fml::SyncSwitch::Handlers().SetIfFalse([&] {
+               rasterizer->Draw(pipeline);
+               if (waiting_for_first_frame.load()) {
+                 waiting_for_first_frame.store(false);
+                 waiting_for_first_frame_condition.notify_all();
+               }
+             }).SetIfTrue([&] {
+               // drop pipeline
+               Pipeline<flutter::LayerTree>::Consumer consumer =[&](std::unique_ptr<LayerTree> layer_tree) {};
+               (void)pipeline->Consume(consumer);
 
-          if (waiting_for_first_frame.load()) {
-            waiting_for_first_frame.store(false);
-            waiting_for_first_frame_condition.notify_all();
+               if (waiting_for_first_frame.load()) {
+                 waiting_for_first_frame.store(false);
+                 waiting_for_first_frame_condition.notify_all();
+               }
+             })
+           );
           }
-        }
       });
 }
 
