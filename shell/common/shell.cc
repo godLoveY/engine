@@ -970,13 +970,13 @@ void Shell::OnAnimatorDraw(fml::RefPtr<Pipeline<flutter::LayerTree>> pipeline) {
                }
              }).SetIfTrue([&] {
                // drop pipeline
-               Pipeline<flutter::LayerTree>::Consumer consumer =[&](std::unique_ptr<LayerTree> layer_tree) {};
-               (void)pipeline->Consume(consumer);
-
-               if (waiting_for_first_frame.load()) {
-                 waiting_for_first_frame.store(false);
-                 waiting_for_first_frame_condition.notify_all();
-               }
+//               Pipeline<flutter::LayerTree>::Consumer consumer =[&](std::unique_ptr<LayerTree> layer_tree) {};
+//               (void)pipeline->Consume(consumer);
+//
+//               if (waiting_for_first_frame.load()) {
+//                 waiting_for_first_frame.store(false);
+//                 waiting_for_first_frame_condition.notify_all();
+//               }
              })
            );
           }
