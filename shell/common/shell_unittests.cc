@@ -142,7 +142,8 @@ TEST_F(ShellTest,
             ShellTestPlatformView::BackendType::kDefaultBackend);
       },
       [](Shell& shell) {
-        return std::make_unique<Rasterizer>(shell, shell.GetTaskRunners());
+        return std::make_unique<Rasterizer>(shell, shell.GetTaskRunners(),
+                                            shell.GetIsGpuDisabledSyncSwitch());
       });
   ASSERT_TRUE(ValidateShell(shell.get()));
   ASSERT_TRUE(DartVMRef::IsInstanceRunning());
