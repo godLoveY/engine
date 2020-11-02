@@ -46,6 +46,7 @@ class MultiFrameCodec : public Codec {
     // to on the IO thread. They are not safe to access or write on the UI
     // thread.
     int nextFrameIndex_;
+    bool isGpuDisabled_;
     // The last decoded frame that's required to decode any subsequent frames.
     std::unique_ptr<SkBitmap> lastRequiredFrame_;
 

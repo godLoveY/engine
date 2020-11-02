@@ -118,7 +118,7 @@ sk_sp<SkImage> MultiFrameCodec::State::GetNextFrameImage(
     lastRequiredFrameIndex_ = nextFrameIndex_;
   }
 
-  if (resourceContext) {
+  if (resourceContext && (!isGpuDisabled_)) {
     SkPixmap pixmap(bitmap.info(), bitmap.pixelRef()->pixels(),
                     bitmap.pixelRef()->rowBytes());
     return SkImage::MakeCrossContextFromPixmap(resourceContext.get(), pixmap,
@@ -179,6 +179,12 @@ Dart_Handle MultiFrameCodec::getNextFrame(Dart_Handle callback_handle) {
               [callback = std::move(callback)]() { callback->Clear(); }));
           return;
         }
+        io_manager->GetIsGpuDisabledSyncSwitch()->Execute(
+           fml::SyncSwitch::Handlers().SetIfFalse([&] {
+            state->isGpuDisabled_ = 0;
+        }).SetIfTrue([&] {
+            state->isGpuDisabled_ = 1;
+        }));
         state->GetNextFrameAndInvokeCallback(
             std::move(callback), std::move(ui_task_runner),
             io_manager->GetResourceContext(), io_manager->GetSkiaUnrefQueue(),
